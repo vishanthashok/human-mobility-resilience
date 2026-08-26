@@ -31,6 +31,42 @@ Research associations (Spearman vs days-to-recovery, uncensored users):
 
 Features used for prediction are leakage-safe: baseline behavior plus the first 24 hours after impact only.
 
+## Result figures
+
+![Results overview](docs/figures/results_overview.png)
+
+**Median disruption over time** (IQR band). Day 0 is the curated disaster clock.
+
+![Median Mobility Disruption Score over time](docs/figures/mds_over_time.png)
+
+**Kaplan–Meier recovery.** About 10% recovered by day 3 and 21% by day 21; the rest are right-censored.
+
+![Kaplan–Meier recovery curve](docs/figures/kaplan_meier.png)
+
+**Who recovers, and how well the model ranks them**
+
+![Recovery vs censoring by disaster](docs/figures/recovery_by_disaster.png)
+
+![Model comparison](docs/figures/model_comparison.png)
+
+![Random forest feature importance](docs/figures/feature_importance.png)
+
+**Research questions.** Larger day-0 disruption and displacement are associated with *longer* recovery, not shorter.
+
+![Research correlations](docs/figures/research_correlations.png)
+
+**Example anonymized trajectory** (not a real basemap — longitude is shifted).
+
+![Example trajectory](docs/figures/example_trajectory.png)
+
+![Median disruption by disaster type](docs/figures/mds_by_disaster_type.png)
+
+Regenerate figures after a pipeline run:
+
+```bash
+python scripts/export_figures.py
+```
+
 ## Data
 
 [Human Mobility During Natural Disasters](https://www.kaggle.com/datasets/dryad/human-mobility-during-natural-disasters) (Wang & Taylor 2016, PLoS ONE).
@@ -61,6 +97,7 @@ data/events.csv          curated disaster timestamps
 notebooks/               narrative analysis
 src/                     reusable pipeline
 dashboard/app.py         Streamlit resilience dashboard
+docs/figures/            result charts used in this README
 scripts/                 download + run
 ```
 
