@@ -1,0 +1,35 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.ipynb_checkpoints/
+.DS_Store
+.env
+.env.*
+*.pem
+kaggle.json
+.kaggle/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Raw and processed mobility data are large — download locally
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Model binaries
+models/*.pkl
+models/*.joblib
+artifacts/*.parquet
+artifacts/*.png
+artifacts/*.html
+!artifacts/.gitkeep

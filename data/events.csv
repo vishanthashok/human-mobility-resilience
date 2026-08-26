@@ -1,0 +1,16 @@
+event_id,name,disaster_type,location,event_datetime_utc,timezone,source
+01_Wipha,Typhoon Wipha,typhoon,"Tokyo, Japan",2013-10-15T15:00:00Z,Asia/Tokyo,Closest approach / Tokyo-area impacts 15-16 Oct 2013 (JMA)
+02_Halong,Typhoon Halong,typhoon,"Okinawa, Japan",2014-08-07T03:00:00Z,Asia/Tokyo,Ryukyu / Okinawa passage ~7-8 Aug 2014
+03_Kalmaegi,Typhoon Kalmaegi,typhoon,"Calasiao, Philippines",2014-09-14T09:00:00Z,Asia/Manila,Landfall Divilacan ~17:00 PHT 14 Sep 2014
+04_Rammasun_Manila,Typhoon Rammasun,typhoon,"Manila, Philippines",2014-07-15T16:00:00Z,Asia/Manila,Landfall Sorsogon ~08:30 UTC 15 Jul 2014; Manila passage later that day
+11_Bohol,Bohol earthquake,earthquake,"Bohol, Philippines",2013-10-15T00:12:31Z,Asia/Manila,USGS M7.2 08:12:31 PHT
+12_Iquique,Iquique earthquake,earthquake,"Iquique, Chile",2014-04-01T20:46:45Z,America/Santiago,USGS M8.2
+13_Napa,South Napa earthquake,earthquake,"Napa, USA",2014-08-24T10:20:44Z,America/Los_Angeles,USGS M6.0 03:20:44 PDT
+21_Norfolk,Winter Storm Xaver,winter_storm,"Norfolk, Britain",2013-12-05T18:00:00Z,Europe/London,North Sea surge / UK east coast 5 Dec 2013
+22_Hamburg,Winter Storm Xaver,winter_storm,"Hamburg, Germany",2013-12-06T05:00:00Z,Europe/Berlin,Xaver peak over northern Germany 6 Dec 2013
+23_Atlanta,Winter Storm Leon,winter_storm,"Atlanta, USA",2014-01-28T17:00:00Z,America/New_York,Atlanta ice / snow gridlock ~noon EST 28 Jan 2014
+31_Phoenix,Phoenix thunderstorm,thunderstorm,"Phoenix, USA",2014-09-08T21:00:00Z,America/Phoenix,Historic Phoenix flooding 8 Sep 2014 (verify against tweet window)
+32_Detroit,Detroit thunderstorm,thunderstorm,"Detroit, USA",2014-08-12T00:00:00Z,America/Detroit,11 Aug 2014 Detroit metro flash flood
+33_Baltimore,Baltimore thunderstorm,thunderstorm,"Baltimore, USA",2014-07-10T20:00:00Z,America/New_York,Severe mid-Atlantic storms summer 2014 (verify against tweet window)
+41_AuFire1,NSW bushfire 1,wildfire,"New South Wales, Australia",2013-10-16T13:00:00Z,Australia/Sydney,Blue Mountains fires from 17 Oct 2013
+42_AuFire2,NSW bushfire 2,wildfire,"New South Wales, Australia",2013-10-23T13:00:00Z,Australia/Sydney,Second NSW fire pulse in Oct 2013 (verify against tweet window)
