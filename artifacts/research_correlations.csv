@@ -1,0 +1,5 @@
+feature,spearman_vs_recovery_days,question
+baseline_radius,0.2648366293514466,Do highly mobile people recover faster?
+day0_max_displacement,0.40409991404048967,Does initial displacement predict longer recovery?
+day0_mds,0.470364320472429,Does initial disruption magnitude predict longer recovery?
+baseline_entropy,0.3045913292512216,Does more diverse routine movement change recovery?

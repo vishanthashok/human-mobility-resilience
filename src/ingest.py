@@ -42,25 +42,29 @@ def load_raw(csv_path: Path | None = None) -> pd.DataFrame:
 
 
 def standardize_raw(df: pd.DataFrame) -> pd.DataFrame:
-    rename = {
-        "disaster.event": "disaster",
-        "user.anon": "user_anon",
-        "longitude.anon": "longitude",
-        "time": "time",
-        "latitude": "latitude",
-    }
-    df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
-    required = {"disaster", "user_anon", "latitude", "longitude", "time"}
-    missing = required - set(df.columns)
-    if missing:
+    """Normalize column names and swap lat/lon.
+
+    In this Kaggle extract, ``latitude`` holds geographic longitude and
+    ``longitude.anon`` holds a shifted latitude. Distances are valid within
+    an event after the swap; do not plot on a real basemap.
+    """
+    needed = {"disaster.event", "user.anon", "latitude", "longitude.anon", "time"}
+    if not needed.issubset(df.columns):
+        missing = needed - set(df.columns)
         raise ValueError(f"Raw data missing columns: {missing}")
-    df = df.copy()
-    df["user_anon"] = df["user_anon"].astype(str)
-    df["disaster"] = df["disaster"].astype(str)
-    df["time"] = pd.to_datetime(df["time"], utc=True, errors="coerce")
-    df = df.dropna(subset=["time", "latitude", "longitude"])
-    df = df.sort_values(["disaster", "user_anon", "time"], kind="mergesort")
-    return df.reset_index(drop=True)
+    out = pd.DataFrame(
+        {
+            "disaster": df["disaster.event"].astype(str),
+            "user_anon": df["user.anon"].astype(str),
+            "latitude": pd.to_numeric(df["longitude.anon"], errors="coerce"),
+            "longitude": pd.to_numeric(df["latitude"], errors="coerce"),
+            "time": df["time"],
+        }
+    )
+    out["time"] = pd.to_datetime(out["time"], utc=True, format="mixed", errors="coerce")
+    out = out.dropna(subset=["time", "latitude", "longitude"])
+    out = out.sort_values(["disaster", "user_anon", "time"], kind="mergesort")
+    return out.reset_index(drop=True)
 
 
 def attach_disaster_clock(

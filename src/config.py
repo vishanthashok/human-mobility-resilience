@@ -37,8 +37,9 @@ MDS_WEIGHTS = {
 RECOVERY_TOLERANCE = 0.20
 RECOVERY_CONSECUTIVE_DAYS = 2
 
-FOCUS_EVENT = "13_Napa"
-V15_EVENTS = ("13_Napa", "23_Atlanta", "04_Rammasun_Manila")
+# IDs match the Kaggle CSV (they differ from the Kaggle dataset card).
+FOCUS_EVENT = "14_Napa"
+V15_EVENTS = ("14_Napa", "23_Atlanta", "08_Rammasun_Manila")
 
 RANDOM_STATE = 42
 N_CV_FOLDS = 5

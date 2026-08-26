@@ -18,7 +18,7 @@ def main() -> None:
     parser.add_argument(
         "--events",
         default=FOCUS_EVENT,
-        help="Comma-separated event ids, or 'all'. Default: 13_Napa",
+        help="Comma-separated event ids, or 'all'. Default: 14_Napa",
     )
     parser.add_argument(
         "--skip-models",

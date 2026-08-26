@@ -70,7 +70,7 @@ def main() -> None:
     data = load_processed()
     if data is None:
         st.error("Processed tables not found. Run the pipeline first.")
-        st.code("python scripts/download_data.py\npython scripts/run_pipeline.py --events 13_Napa")
+        st.code("python scripts/download_data.py\npython scripts/run_pipeline.py --events 14_Napa")
         return
 
     users = data["users"]
@@ -111,6 +111,9 @@ def main() -> None:
             "Features use baseline behavior plus the first 24 hours only. "
             "RMSE/MAE are reported on uncensored users; C-index uses all users."
         )
+        if metrics.get("unseen_disaster_holdout") and not metrics["unseen_disaster_holdout"].get("skipped"):
+            st.subheader("Unseen-disaster holdout")
+            st.json(metrics["unseen_disaster_holdout"])
 
     importance = data["importance"]
     if not importance.empty:

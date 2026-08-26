@@ -14,7 +14,7 @@ from src.config import (
 )
 
 DISTANCE_METRICS = ("radius", "displacement", "mobility_distance")
-RECOVERY_METRICS = DISTANCE_METRICS + ("unique_locations",)
+RECOVERY_METRICS = DISTANCE_METRICS
 
 
 def _eps(metric: str) -> float:
@@ -77,10 +77,11 @@ def label_recovery(disrupted: pd.DataFrame) -> pd.DataFrame:
     g = work.groupby(["disaster", "user_anon"], sort=False)
     work["next_day"] = g["day_relative"].shift(-1)
     work["next_in_band"] = g["in_band"].shift(-1)
+    next_ok = work["next_in_band"].eq(True)
     work["is_recovery_start"] = (
         (work["day_relative"] >= 0)
         & work["in_band"]
-        & work["next_in_band"].fillna(False)
+        & next_ok
         & (work["next_day"] == work["day_relative"] + 1)
     )
     recovered = (

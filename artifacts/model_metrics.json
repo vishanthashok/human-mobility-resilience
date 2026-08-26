@@ -1,0 +1,93 @@
+{
+  "n_users": 7402,
+  "n_recovered": 1386,
+  "n_censored": 6016,
+  "median_recovery_days_uncensored": 3.0,
+  "disasters": [
+    "01_Wipha",
+    "02_Halong",
+    "06_Kalmaegi",
+    "08_Rammasun_Manila",
+    "12_Bohol",
+    "13_Iquique",
+    "14_Napa",
+    "21_Norfolk",
+    "22_Hamburg",
+    "23_Atlanta",
+    "31_Phoenix",
+    "33_Baltimore",
+    "41_AuFire1",
+    "42_AuFire2"
+  ],
+  "regression": [
+    {
+      "model": "linear",
+      "rmse_uncensored_mean": 6.627059960002545,
+      "mae_uncensored_mean": 5.564315310754219,
+      "c_index_mean": 0.7687005598350263,
+      "n_users": 7402,
+      "n_uncensored": 1386
+    },
+    {
+      "model": "random_forest",
+      "rmse_uncensored_mean": 6.740044476553621,
+      "mae_uncensored_mean": 5.405142115763332,
+      "c_index_mean": 0.8252768510596656,
+      "n_users": 7402,
+      "n_uncensored": 1386
+    }
+  ],
+  "kaplan_meier": [
+    {
+      "day": 3,
+      "fraction_recovered": 0.09997298027560064
+    },
+    {
+      "day": 7,
+      "fraction_recovered": 0.1420140857631259
+    },
+    {
+      "day": 14,
+      "fraction_recovered": 0.18758169659168467
+    },
+    {
+      "day": 21,
+      "fraction_recovered": 0.20524909386014867
+    }
+  ],
+  "cox_concordance": 0.7550573624021651,
+  "rsf_fitted": true,
+  "research_correlations": [
+    {
+      "feature": "baseline_radius",
+      "spearman_vs_recovery_days": 0.2648366293514466,
+      "question": "Do highly mobile people recover faster?"
+    },
+    {
+      "feature": "day0_max_displacement",
+      "spearman_vs_recovery_days": 0.40409991404048967,
+      "question": "Does initial displacement predict longer recovery?"
+    },
+    {
+      "feature": "day0_mds",
+      "spearman_vs_recovery_days": 0.470364320472429,
+      "question": "Does initial disruption magnitude predict longer recovery?"
+    },
+    {
+      "feature": "baseline_entropy",
+      "spearman_vs_recovery_days": 0.3045913292512216,
+      "question": "Does more diverse routine movement change recovery?"
+    }
+  ],
+  "unseen_disaster_holdout": {
+    "n": 240,
+    "n_uncensored": 71,
+    "c_index": 0.8483889528193326,
+    "rmse_uncensored": 3.810348719638255,
+    "mae_uncensored": 3.153635934957479,
+    "test_disaster": "12_Bohol",
+    "n_train": 7162,
+    "n_test": 240,
+    "skipped": false
+  }
+}

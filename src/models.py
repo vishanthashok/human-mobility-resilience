@@ -16,9 +16,13 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import GroupKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
-from xgboost import XGBRegressor
 
 from src.config import N_CV_FOLDS, RANDOM_STATE
+
+try:
+    from xgboost import XGBRegressor
+except Exception:  # OpenMP / libomp is often missing on macOS
+    XGBRegressor = None
 
 NUMERIC_FEATURES = [
     "baseline_radius",
@@ -59,7 +63,7 @@ def _preprocessor() -> ColumnTransformer:
 
 
 def regression_estimators() -> dict[str, Any]:
-    return {
+    estimators: dict[str, Any] = {
         "linear": LinearRegression(),
         "random_forest": RandomForestRegressor(
             n_estimators=300,
@@ -68,7 +72,9 @@ def regression_estimators() -> dict[str, Any]:
             random_state=RANDOM_STATE,
             n_jobs=-1,
         ),
-        "xgboost": XGBRegressor(
+    }
+    if XGBRegressor is not None:
+        estimators["xgboost"] = XGBRegressor(
             n_estimators=400,
             max_depth=4,
             learning_rate=0.05,
@@ -77,8 +83,8 @@ def regression_estimators() -> dict[str, Any]:
             objective="reg:squarederror",
             random_state=RANDOM_STATE,
             n_jobs=-1,
-        ),
-    }
+        )
+    return estimators
 
 
 def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -91,10 +97,14 @@ def evaluate_regression_fold(
     """RMSE/MAE on uncensored users; C-index uses all users (higher pred = slower recovery)."""
     y_pred = np.clip(y_pred, 0, None)
     mask = observed.astype(bool)
+    try:
+        c_index = float(concordance_index(y_true, y_pred, event_observed=observed))
+    except Exception:
+        c_index = float("nan")
     out = {
         "n": int(len(y_true)),
         "n_uncensored": int(mask.sum()),
-        "c_index": float(concordance_index(y_true, y_pred, event_observed=observed)),
+        "c_index": c_index,
     }
     if mask.sum() >= 2:
         out["rmse_uncensored"] = rmse(y_true[mask], y_pred[mask])
@@ -172,6 +182,8 @@ def fit_cox(users: pd.DataFrame) -> CoxPHFitter:
     cols = NUMERIC_FEATURES + [TARGET, "event_observed"]
     cox_df = users[cols].copy()
     cox_df = cox_df.replace([np.inf, -np.inf], np.nan).dropna()
+    if cox_df["event_observed"].sum() < 5:
+        raise ValueError("Not enough uncensored recoveries to fit Cox PH.")
     cph = CoxPHFitter(penalizer=0.1)
     cph.fit(cox_df, duration_col=TARGET, event_col="event_observed")
     return cph
@@ -197,7 +209,10 @@ def try_random_survival_forest(users: pd.DataFrame, n_estimators: int = 200):
         n_jobs=-1,
         random_state=RANDOM_STATE,
     )
-    rsf.fit(X, y)
+    try:
+        rsf.fit(X, y)
+    except Exception:
+        return None, None
     return rsf, X.columns.tolist()
 
 
@@ -221,6 +236,58 @@ def feature_importance_table(pipe: Pipeline, model_name: str) -> pd.DataFrame:
             "kind": kind,
         }
     ).sort_values("importance", key=np.abs, ascending=False)
+
+
+def evaluate_unseen_disaster(
+    users: pd.DataFrame, test_disaster: str | None = None
+) -> dict | None:
+    """Train on all but one disaster; evaluate on a disaster never seen in training."""
+    counts = users.groupby("disaster").size().sort_values(ascending=False)
+    if len(counts) < 3:
+        return None
+    if test_disaster is None:
+        # Prefer a mid-sized held-out event so train still has data.
+        test_disaster = counts.index[len(counts) // 2]
+    train = users.loc[users["disaster"] != test_disaster]
+    test = users.loc[users["disaster"] == test_disaster]
+    if len(train) < 30 or len(test) < 15:
+        return {
+            "test_disaster": test_disaster,
+            "skipped": True,
+            "reason": "too few users in train or test",
+        }
+    X_cols = NUMERIC_FEATURES + CATEGORICAL_FEATURES
+    pipe = Pipeline(
+        steps=[
+            ("prep", _preprocessor()),
+            (
+                "model",
+                RandomForestRegressor(
+                    n_estimators=300,
+                    max_depth=8,
+                    min_samples_leaf=5,
+                    random_state=RANDOM_STATE,
+                    n_jobs=-1,
+                ),
+            ),
+        ]
+    )
+    pipe.fit(train[X_cols], train[TARGET])
+    pred = np.clip(pipe.predict(test[X_cols]), 0, None)
+    metrics = evaluate_regression_fold(
+        test[TARGET].to_numpy(dtype=float),
+        pred,
+        test["event_observed"].to_numpy(dtype=int),
+    )
+    metrics.update(
+        {
+            "test_disaster": test_disaster,
+            "n_train": int(len(train)),
+            "n_test": int(len(test)),
+            "skipped": False,
+        }
+    )
+    return metrics
 
 
 def research_correlations(users: pd.DataFrame) -> pd.DataFrame:

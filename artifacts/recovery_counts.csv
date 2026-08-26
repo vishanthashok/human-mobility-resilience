@@ -1,0 +1,15 @@
+disaster,n_users,n_recovered,median_last_day
+01_Wipha,2943,524,21.0
+02_Halong,429,38,17.0
+06_Kalmaegi,70,23,17.0
+08_Rammasun_Manila,1519,477,17.0
+12_Bohol,276,79,15.0
+13_Iquique,35,7,15.0
+14_Napa,57,2,5.0
+21_Norfolk,416,145,14.0
+22_Hamburg,24,2,14.0
+23_Atlanta,319,39,16.0
+31_Phoenix,1710,161,14.0
+33_Baltimore,540,64,14.0
+41_AuFire1,81,19,24.0
+42_AuFire2,122,22,23.0

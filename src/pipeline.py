@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from src.config import ARTIFACTS_DIR, FOCUS_EVENT, PROCESSED_DIR, V15_EVENTS
@@ -24,8 +25,19 @@ from src.models import (
     kaplan_meier,
     research_correlations,
     try_random_survival_forest,
+    evaluate_unseen_disaster,
 )
 from src.recovery import attach_disruption, label_recovery, leakage_safe_user_table
+
+
+def _json_ready(obj):
+    if isinstance(obj, dict):
+        return {k: _json_ready(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_json_ready(v) for v in obj]
+    if isinstance(obj, float) and (np.isnan(obj) or np.isinf(obj)):
+        return None
+    return obj
 
 
 def parse_event_list(spec: str) -> list[str] | None:
@@ -67,6 +79,13 @@ def run_feature_pipeline(
 def save_processed(tables: dict[str, pd.DataFrame], out_dir: Path | None = None) -> Path:
     out_dir = out_dir or PROCESSED_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    tables["coverage"].to_csv(ARTIFACTS_DIR / "event_coverage.csv", index=False)
+    tables["labels"].groupby("disaster").agg(
+        n_users=("user_anon", "nunique"),
+        n_recovered=("event_observed", "sum"),
+        median_last_day=("last_day", "median"),
+    ).reset_index().to_csv(ARTIFACTS_DIR / "recovery_counts.csv", index=False)
     for name in (
         "coverage",
         "kept_users",
@@ -84,14 +103,26 @@ def save_processed(tables: dict[str, pd.DataFrame], out_dir: Path | None = None)
 
 
 def run_models(users: pd.DataFrame) -> dict:
+    if len(users) < 10:
+        raise ValueError(f"Need at least 10 users to model; got {len(users)}")
     metrics, fitted = cross_validate_regressors(users)
     km = kaplan_meier(users)
-    cox = fit_cox(users)
+    cox = None
+    try:
+        cox = fit_cox(users)
+    except Exception as exc:
+        print(f"Cox PH skipped: {exc}")
     rsf, _ = try_random_survival_forest(users)
-    importance = feature_importance_table(fitted["random_forest"], "random_forest")
-    xgb_importance = feature_importance_table(fitted["xgboost"], "xgboost")
-    importance = pd.concat([importance, xgb_importance], ignore_index=True)
+    importance_frames = []
+    for name, pipe in fitted.items():
+        importance_frames.append(feature_importance_table(pipe, name))
+    importance = (
+        pd.concat(importance_frames, ignore_index=True)
+        if importance_frames
+        else pd.DataFrame(columns=["model", "feature", "importance", "kind"])
+    )
     questions = research_correlations(users)
+    holdout = evaluate_unseen_disaster(users)
 
     km_points = []
     sf = km.survival_function_
@@ -114,16 +145,20 @@ def run_models(users: pd.DataFrame) -> dict:
         "disasters": sorted(users["disaster"].unique().tolist()),
         "regression": metrics.to_dict(orient="records"),
         "kaplan_meier": km_points,
-        "cox_concordance": float(cox.concordance_index_),
+        "cox_concordance": float(cox.concordance_index_) if cox is not None else None,
         "rsf_fitted": rsf is not None,
         "research_correlations": questions.to_dict(orient="records"),
+        "unseen_disaster_holdout": holdout,
     }
     ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
-    (ARTIFACTS_DIR / "model_metrics.json").write_text(json.dumps(summary, indent=2))
+    (ARTIFACTS_DIR / "model_metrics.json").write_text(
+        json.dumps(_json_ready(summary), indent=2)
+    )
     metrics.to_csv(ARTIFACTS_DIR / "regression_cv.csv", index=False)
     importance.to_csv(ARTIFACTS_DIR / "feature_importance.csv", index=False)
     questions.to_csv(ARTIFACTS_DIR / "research_correlations.csv", index=False)
-    cox.summary.to_csv(ARTIFACTS_DIR / "cox_summary.csv")
+    if cox is not None:
+        cox.summary.to_csv(ARTIFACTS_DIR / "cox_summary.csv")
     return {
         "metrics": metrics,
         "fitted": fitted,
@@ -144,7 +179,15 @@ def run(
     events = parse_event_list(event_spec)
     tables = run_feature_pipeline(events, raw_path=raw_path)
     save_processed(tables)
-    model_bundle = {} if skip_models else run_models(tables["users"])
+    model_bundle = {}
+    if not skip_models:
+        if tables["users"].empty:
+            print("No eligible users after filters; skipping models.")
+        else:
+            try:
+                model_bundle = run_models(tables["users"])
+            except Exception as exc:
+                print(f"Modeling failed ({exc}); features and labels were still written.")
     return {"tables": tables, "models": model_bundle}
 
 
